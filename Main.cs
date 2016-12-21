@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using Microsoft.Xna.Framework;
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
@@ -17,7 +18,7 @@ namespace WireToggleEvent
 		public override string Description => "Emits wire toggling events for use with other plugins";
 		public override Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
-		public delegate void DWireToggle(short x, short y, TSPlayer plr);
+		public delegate void DWireToggle(WireToggleEventArgs e);
 
 		public static event DWireToggle HitSwitch;
 
@@ -31,7 +32,7 @@ namespace WireToggleEvent
 			ServerApi.Hooks.NetGetData.Register(this, OnGetData);
 
 #if DEBUG
-			HitSwitch += (x, y, plr) => Console.WriteLine($"{x}, {y} from {plr.Name}");
+			HitSwitch += e => Console.WriteLine($"{e.Position.X}, {e.Position.Y} from {e.Player.Name}");
 #endif
 		}
 
@@ -57,8 +58,20 @@ namespace WireToggleEvent
 				short Y = reader.ReadInt16();
 				TSPlayer player = TShock.Players[e.Msg.whoAmI];
 
-				HitSwitch?.Invoke(X, Y, player);
+				HitSwitch?.Invoke(new WireToggleEventArgs(X, Y, player));
 			}
+		}
+	}
+
+	public class WireToggleEventArgs : EventArgs
+	{
+		public readonly Point Position;
+		public readonly TSPlayer Player;
+
+		public WireToggleEventArgs(short x, short y, TSPlayer plr)
+		{
+			Position = new Point(x, y);
+			Player = plr;
 		}
 	}
 }
